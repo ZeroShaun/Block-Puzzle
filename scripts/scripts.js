@@ -6,15 +6,15 @@ const game = {
     Position:[
       [[3,1],[4,1],[5,1],[5,0]], // Active position. Array structure is Position[1][2][0] -> 1 refers to first orientation, 2 refers to the second piece of the shape in that orienation and 0 points to the x coordinate.
       [[5,5],[5,6],[5,7],[5,8]], // Orientation 1
-      [[5,5],[5,6],[5,7],[5,8]], // Orientation 2
-      [[3,1],[4,1],[5,1],[5,0]] // Orienation 3
+      [[6,5],[5,6],[4,7],[5,9]], // Orientation 2
+      [[3,3],[7,1],[5,1],[2,0]] // Orienation 3
     ], 
     Orientation: 1, // Holds the orientation of the shape.
     Color: "rgb(100%,43.1%,2.7%)", // Holds the color of the objects; used to color the grid.
   },
   activeShape:{},
   bgColor:"rgba( 255, 255, 255, 0.25 )",
-  highestRow:21, // Used to store the highest row that's occupied to prevent unnecessarily checking a bunch of empty rows. Set to one more than the maximum rows.
+  highestRow:21, // Used to store the highest row that's occupied to prevent unnecessarily checking a bunch of empty rows. Set to one more than the maximum row.
 }
 
 // Grid generation. Since it generates left to right we start iterating through each ROW and generate COLUMNS before moving to the next row.
@@ -73,42 +73,58 @@ function spawnShape() {
 function flipShape(flipDir) {
   let newOre = 0;
   const lastPos = game.activeShape.Position.length-1;
+  if(lastPos === 1) {
+    return;
+  }
   switch(game.activeShape.Orientation) { // Checks the current orientation so we can attempt to flip to the next
     case 1:
       if(!collisionCheck(game.activeShape.Position[2],"flip") && flipDir === "right") { // Checks the second orientation for collision if flipping right
         newOre = 2;
         game.activeShape.Orientation = newOre;
-      } else if(!collisionCheck(game.activeShape.Position[lastPos]) && flipDir === "left") { // Checks the last orientation for collision if flipping left
+      } else if(!collisionCheck(game.activeShape.Position[lastPos],"flip") && flipDir === "left") { // Checks the last orientation for collision if flipping left
         newOre = lastPos;
         game.activeShape.Orientation = newOre;
       }
       break;
     
     case 2:
-      if(!collisionCheck(game.activeShape.Position[3]) && flipDir === "right") { // checks the third orientation for collision if flipping right.
-        newOre = 3;
+      if(lastPos !== 2) {
+        if(!collisionCheck(game.activeShape.Position[3],"flip") && flipDir === "right") { 
+          newOre = 3;
+          game.activeShape.Orientation = newOre;
+        }
+      } else if(!collisionCheck(game.activeShape.Position[1],"flip") && flipDir === "right") {
+        newOre = 1;
         game.activeShape.Orientation = newOre;
-      } else if(!collisionCheck(game.activeShape.Position[1]) && flipDir === "left") {
+      }
+      if(!collisionCheck(game.activeShape.Position[1],"flip") && flipDir === "left") {
         newOre = 1;
         game.activeShape.Orientation = newOre;
       }
       break;
 
     case 3:
-      if(!collisionCheck(game.activeShape.Position[4]) && flipDir === "right") { // checks the third orientation for collision if flipping right.
-        newOre = 4;
+      console.log("3 triggered");
+      if(lastPos !== 3) {
+        if(!collisionCheck(game.activeShape.Position[4],"flip") && flipDir === "right") { 
+          newOre = 4;
+          game.activeShape.Orientation = newOre;
+        }
+      } else if(!collisionCheck(game.activeShape.Position[1],"flip") && flipDir === "right") {
+        newOre = 1;
         game.activeShape.Orientation = newOre;
-      } else if(!collisionCheck(game.activeShape.Position[2]) && flipDir === "left") {
+      }
+      if(!collisionCheck(game.activeShape.Position[2],"flip") && flipDir === "left") {
         newOre = 2;
         game.activeShape.Orientation = newOre;
       }
       break;
 
-    case 4:
-      if(!collisionCheck(game.activeShape.Position[1]) && flipDir === "right") { // checks the third orientation for collision if flipping right.
+    case 4: // 4 is always the last position if it is called, so no need to check if it === lastPos
+      if(!collisionCheck(game.activeShape.Position[1],"flip") && flipDir === "right") { 
         newOre = 1;
         game.activeShape.Orientation = newOre;
-      } else if(!collisionCheck(game.activeShape.Position[3]) && flipDir === "left") {
+      } else if(!collisionCheck(game.activeShape.Position[3],"flip") && flipDir === "left") {
         newOre = 3;
         
       }
@@ -129,6 +145,7 @@ function flipShape(flipDir) {
 
 // Renders or undraws the currently active shape
 function render(a) {
+  console.log(`${game.activeShape.Position[0]} sent to render function.`);
   let renderColor;
   if(a === "draw") {
     renderColor = game.activeShape.Color;
@@ -174,7 +191,7 @@ function collisionCheck(newPos, action) {
       return true; // collision is true
     } else if(action === "right" && (x === 9 || game.grid[x+1][y][0] === true)) {
       return true; // collision is true
-    } else if(action === "flip" && (x === -1 || x === game.maxCol || y === -1 || y === game.maxRow || game.grid[x][y][0] === true)) {
+    } else if(action === "flip" && (x < 0 || x >= game.maxCol || y < 0 || y >= game.maxRow || game.grid[x][y][0] === true)) {
       console.log("Invalid flip orientation");
       return true; // invalid flip orientation because it's either off the grid or occupies an already occupied location.
     }
