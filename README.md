@@ -1,4 +1,4 @@
-## Tetris-Like Game in JavaScript
+## Tetris-Inspired Game in JavaScript
 
 This project is a Tetris-like game developed for educational purposes and as a coding exercise. The game mechanics and gameplay are inspired by Tetris, which is a copyrighted game, and all rights to the original Tetris game are owned by their respective copyright holders.
 
