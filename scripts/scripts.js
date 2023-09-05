@@ -17,7 +17,7 @@ const game = {
       [[4,2],[4,1],[4,0],[3,0]], // Orientation 4
     ], 
     Orientation: 1, // Holds the orientation of the shape.
-    Color: "rgb(100%,43.1%,2.7%)", // Holds the color of the objects; used to color the grid.
+    Color: "rgb(224, 86, 0)", // Holds the color of the objects; used to color the grid.
   },
   shapeJ:{ // Default values for J shape
     Position:[
@@ -30,28 +30,28 @@ const game = {
     Orientation: 1, // Holds the orientation of the shape.
     Color: "rgb(0, 0, 255)", // Holds the color of the objects; used to color the grid.
   },
-  shapeT:{ // Default values for J shape
+  shapeT:{ // Default values for T shape
     Position:[
-      [[3,1],[4,1],[5,1],[4,0]], // Active position. Array structure is Position[1][2][0] -> 1 refers to first orientation, 2 refers to the second piece of the shape in that orienation and 0 points to the x coordinate.
+      [[3,1],[4,1],[5,1],[4,0]], // Active position.
       [[3,1],[4,1],[5,1],[4,0]], // Orientation 1
       [[4,0],[4,1],[4,2],[5,1]], // Orientation 2
       [[3,1],[4,1],[5,1],[4,2]], // Orienation 3
       [[4,2],[4,1],[4,0],[3,1]], // Orientation 4
     ], 
     Orientation: 1, // Holds the orientation of the shape.
-    Color: "rgb(255, 255, 93)", // Holds the color of the objects; used to color the grid.
+    Color: "rgb(170, 0, 255)", // Holds the color of the objects; used to color the grid.
   },
-  shapeO:{ // Default values for J shape
+  shapeO:{ // Default values for O shape
     Position:[
-      [[4,0],[5,0],[4,1],[5,1]], // Active position. Array structure is Position[1][2][0] -> 1 refers to first orientation, 2 refers to the second piece of the shape in that orienation and 0 points to the x coordinate.
+      [[4,0],[5,0],[4,1],[5,1]], // Active position.
       [[4,0],[5,0],[4,1],[5,1]], // Orientation 1
     ], 
     Orientation: 1, // Holds the orientation of the shape.
-    Color: "rgb(166, 82, 255)", // Holds the color of the objects; used to color the grid.
+    Color: "rgb(255, 244, 0)", // Holds the color of the objects; used to color the grid.
   },
-  shapeI:{ // Default values for J shape
+  shapeI:{ // Default values for I shape
     Position:[
-      [[3,1],[4,1],[5,1],[6,1]], // Active position. Array structure is Position[1][2][0] -> 1 refers to first orientation, 2 refers to the second piece of the shape in that orienation and 0 points to the x coordinate.
+      [[3,1],[4,1],[5,1],[6,1]], // Active position.
       [[3,1],[4,1],[5,1],[6,1]], // Orientation 1
       [[5,0],[5,1],[5,2],[5,3]], // Orientation 2
       [[3,2],[4,2],[5,2],[6,2]], // Orientation 3
@@ -60,9 +60,32 @@ const game = {
     Orientation: 1, // Holds the orientation of the shape.
     Color: "rgb(166, 244, 255)", // Holds the color of the objects; used to color the grid.
   },
+  shapeS:{ // Default values for S shape
+    Position:[
+      [[3,1],[4,1],[4,0],[5,0]], // Active position. 
+      [[3,1],[4,1],[4,0],[5,0]], // Orientation 1
+      [[4,0],[4,1],[5,1],[5,2]], // Orientation 2
+      [[5,1],[4,1],[4,2],[3,2]], // Orientation 3
+      [[4,2],[4,1],[3,1],[3,0]], // Orientation 4
+    ], 
+    Orientation: 1, // Holds the orientation of the shape.
+    Color: "rgb(0, 247, 0)", // Holds the color of the objects; used to color the grid.
+  },
+  shapeZ:{ // Default values for Z shape
+    Position:[
+      [[3,0],[4,0],[4,1],[5,1]], // Active position. 
+      [[3,0],[4,0],[4,1],[5,1]], // Orientation 1
+      [[5,0],[5,1],[4,1],[4,2]], // Orientation 2
+      [[5,2],[4,2],[4,1],[3,1]], // Orientation 3
+      [[3,2],[3,1],[4,1],[4,0]], // Orientation 4
+    ], 
+    Orientation: 1, // Holds the orientation of the shape.
+    Color: "rgb(255, 0, 0)", // Holds the color of the objects; used to color the grid.
+  },
   activeShape:{},
   bgColor:"rgba( 255, 255, 255, 0.25 )",
   highestRow:21, // Used to store the highest row that's occupied to prevent unnecessarily checking a bunch of empty rows. Set to one more than the maximum row.
+  upcomingGrid:[],
 }
 
 // Grid generation. Since it generates left to right we start iterating through each ROW and generate COLUMNS before moving to the next row.
@@ -104,22 +127,40 @@ function generateUpcoming() {
   const randomNum = Math.floor(Math.random()*((7+1)-1)+1);
   switch(randomNum) {
     case 1:
-      game.upcomingBlock.Type = "L";
-      game.upcomingBlock.Color = game.shapeL.Color;
-      game.upcomingBlock.Position = [3,7,6,5];
+      game.upcomingBlock = game.shapeL;
+      game.upcomingGrid = [3,7,6,5];
       break;
 
     case 2:
-      game.upcomingBlock.Type = "J";
-      game.upcomingBlock.Color = game.shapeJ.Color;
-      game.upcomingBlock.Position = [2,6,7,8];
+      game.upcomingBlock = game.shapeJ;
+      game.upcomingGrid = [2,6,7,8];
       break;
 
     case 3:
-      game.upcomingBlock.Type = "T";
-      game.upcomingBlock.Color = game.shapeT.Color;
-      game.upcomingBlock.Position = [3,6,7,8];
+      game.upcomingBlock = game.shapeT;
+      game.upcomingGrid = [3,6,7,8];
       break;
+
+    case 4:
+      game.upcomingBlock = game.shapeO;
+      game.upcomingGrid = [2,3,6,7];
+      break;
+
+    case 5:
+      game.upcomingBlock = game.shapeI;
+      game.upcomingGrid = [5,6,7,8];
+      break;
+
+    case 6:
+      game.upcomingBlock = game.shapeS;
+      game.upcomingGrid = [3,2,5,6];
+      break;
+
+    case 7:
+      game.upcomingBlock = game.shapeZ;
+      game.upcomingGrid = [2,3,7,8];
+      break;
+
   }
   renderUpcoming("draw");
 }
@@ -134,16 +175,22 @@ function test2(ele) {
 }
 
 // Spawn testing functionality.
-function test() {
-  game.activeShape = structuredClone(game.shapeI);
-  render("draw");
+function startGame() {
+  if(!game.started) {
+    generateUpcoming();
+    spawnShape();
+    game.started = true;
+  }
 }
 
 function spawnShape() {
-  // structured copy on the chosen shape based on the game.upcomingBlock.Type value, likely with a switch
-  // color the board with the starting position by calling render("draw")
-  // start the interval for the falling movement. Call it game.fallInterval
-  // call the generateUpcoming function to get a new upcoming block
+  game.activeShape = structuredClone(game.upcomingBlock);
+  render("draw");
+  game.activeShape.fallInterval = setInterval(function() {
+    if(!collisionCheck(game.activeShape.Position[0],"fall")) {
+      moving("fall");}
+  }, 500);
+  generateUpcoming();
 }
 
 function flipShape(flipDir) {
@@ -197,7 +244,7 @@ function renderUpcoming(b) {
   } else if(b === "undraw") {
     thisColor = game.bgColor;
   }
-  game.upcomingBlock.Position.forEach(divID => {
+  game.upcomingGrid.forEach(divID => {
     const divElement = document.getElementById(`${divID}`);
     divElement.style.backgroundColor = thisColor;
   });
@@ -238,7 +285,7 @@ function collisionCheck(newPos, action) {
 }
 
 function settleShape(){
-  const lowestRow = game.activeShape.Position[0][0][1]; // Sets up the variable for holding the lowest row that the shape occupies.
+  let lowestRow = game.activeShape.Position[0][0][1]; // Sets up the variable for holding the lowest row that the shape occupies.
   for(let i=0; i<game.activeShape.Position[0].length; i++){ // Iterate through the active position's shape pieces.
     if(game.activeShape.Position[0][i][1] > lowestRow) { // If the current piece of the shape is on a lower row than the previous
       lowestRow = game.activeShape.Position[0][i][1]; // then update to the lowest row
@@ -251,10 +298,11 @@ function settleShape(){
     game.grid[x][y][0] = true;
     game.grid[x][y][1] = game.activeShape.Color;
   }
-  // stop the falling movement interval
+  console.log("Triggered");
+  clearInterval(game.activeShape.fallInterval);
   Object.keys(game.activeShape).forEach(key => delete game.activeShape[key]); // Clears the activeShape object
   checkRows(lowestRow,game.highestRow-1); // Starts checking rows starting from the lowest row the shape occupies and stops before highestRow-1.
-  // call the function to spawn the upcoming shape spawnShape()
+  spawnShape();
 }
 
 async function checkRows(startHere, stopHere) {
@@ -265,7 +313,7 @@ async function checkRows(startHere, stopHere) {
     for(let x=0; x < game.maxCol; x++) {
       if(game.grid[x][y][0] === false) { 
         break; // If any of the grid cells on the row are empty, we stop looping this row and move on.
-      } else if(game.grid[x][y][0] === true && x === 8) { // If the last grid cell on row (19) is true, then that means all were true
+      } else if(game.grid[x][y][0] === true && x === 9) { // If the last grid cell on row (19) is true, then that means all were true
         await clearRows(y);
       }
     }
