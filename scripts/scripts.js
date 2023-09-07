@@ -1,11 +1,7 @@
 let game = {
   score:0,
   started:false,
-  upcomingBlock: {
-    Position:[],
-    Color:"",
-    Type:"",
-  },
+  upcomingBlock:{},
   maxCol: 10, // Defines the maximum columns.
   maxRow: 20, // Defines the maximum rows.
   grid: [], // First index is the x coordinate, second is the y, then 0 = true or false and 1 = color. So grid[x][y][0] returns true or false and grid[x][y][1] returns the color.
@@ -81,7 +77,6 @@ let game = {
   highestRow:21, // Used to store the highest row that's occupied to prevent unnecessarily checking a bunch of empty rows. Set to one more than the maximum row.
   upcomingGrid:[],
 }
-let gameDefaults = {};
 
 // Grid generation. Since DIVs are placed left to right we must use the outer loop for rows and the inner loop for columns. During the first iteration through the columns, we need to initiate them since they do not yet exist.
 window.onload = function() {
@@ -96,10 +91,17 @@ window.onload = function() {
       elem.setAttribute('data-x', x);
       elem.setAttribute('data-y', y);
       elem.setAttribute("onClick","test2(this)"); // remove this test functionality later
-      game.grid[x].push([false,game.bgColor]); // Now that the columns are initiated, we can push each row element to it's respective column.
+      game.grid[x].push({occupied:false,backgroundColor:game.bgColor,element:elem}); // Now that the columns are initiated, we push each row index to its respective column, which will contain an object holding it's attributes and a reference to its respective DOM element.
     }
   }
-  gameStateClone(1); // Sets gameDefaults to the game object after grids are generated to hold all default values for later.
+}
+
+function startGame() {
+  if(!game.started) {
+    generateUpcoming();
+    spawnShape();
+    game.started = true;
+  } 
 }
 
 // Key press functionality
@@ -168,15 +170,7 @@ function test2(ele) {
   let y = ele.getAttribute("data-y");
   console.log(`X: ${ele.getAttribute("data-x")}`);
   console.log(`Y: ${ele.getAttribute("data-y")}`);
-  console.log(`The color of this grid is ${game.grid[x][y][1]}`);
-}
-
-function startGame() {
-  if(!game.started) {
-    generateUpcoming();
-    spawnShape();
-    game.started = true;
-  } 
+  console.log(`The color of this grid is ${game.grid[x][y].backgroundColor}`);
 }
 
 function spawnShape() {
@@ -192,7 +186,7 @@ function spawnShape() {
 }
 
 function flipShape(flipDir) {
-  let newOre = 0; 
+  let newOre = -1;
   const lastOre = game.activeShape.Position.length-1;
   const currentOre = game.activeShape.Orientation;
   if(lastOre === 0) return;
@@ -227,10 +221,8 @@ function render(drawOrUndraw) {
   for(let i=0; i<pos.length; i++){
     const x = pos[i][0];
     const y = pos[i][1];
-    const selector = `[data-x="${x}"][data-y="${y}"]`;
-    const targetDiv = document.querySelector(selector);
-    game.grid[x][y][1] = renderColor;
-    targetDiv.style.backgroundColor = renderColor;
+    game.grid[x][y].backgroundColor = renderColor;
+    game.grid[x][y].element.style.backgroundColor = renderColor;
   }
 }
 
@@ -261,6 +253,7 @@ function moving(dir) {
       }
     }
   }
+  console.log(`First POS: ${game.activeShape.Position[0]}, second POS: ${game.activeShape.Position[1]}`);
   render("draw"); // Draws the new location after the coordinates are updated.
 }
 
@@ -268,16 +261,17 @@ function collisionCheck(checkPos, action) {
   for(let i=0; i<checkPos.length; i++) {
     const x = checkPos[i][0];
     const y = checkPos[i][1];
-    if(action === "fall" && (y === 19 || game.grid[x][y+1][0] === true)) {
+    if(action === "fall" && (y === 19 || game.grid[x][y+1].occupied === true)) {
       settleShape();
       return true; // collision is true
-    } else if(action === "left" && (x === 0 || game.grid[x-1][y][0] === true)) {
+    } else if(action === "left" && (x === 0 || game.grid[x-1][y].occupied === true)) {
       return true; // collision is true
-    } else if(action === "right" && (x === 9 || game.grid[x+1][y][0] === true)) {
+    } else if(action === "right" && (x === 9 || game.grid[x+1][y].occupied === true)) {
       return true; // collision is true
-    } else if(action === "flip" && (x < 0 || x >= game.maxCol-1 || y < 0 || y >= game.maxRow-1 || game.grid[x][y][0] === true)) {
+    } else if(action === "flip" && (x < 0 || x >= game.maxCol || y < 0 || y >= game.maxRow || game.grid[x][y].occupied === true)) {
       return true; // invalid flip orientation because it's either off the grid or occupies an already occupied location.
     }
+    console.log(`No collision detected on ${x} and ${y}`)
   }
   return false;
 }
@@ -295,8 +289,8 @@ function settleShape(){
     }
     const x = pos[i][0];
     const y = pos[i][1];
-    game.grid[x][y][0] = true;
-    game.grid[x][y][1] = game.activeShape.Color;
+    game.grid[x][y].occupied = true;
+    game.grid[x][y].backgroundColor = game.activeShape.Color;
   }
   clearInterval(game.activeShape.fallInterval);
   checkRows(lowestRow,game.highestRow-1); // Starts checking rows starting from the lowest row the shape occupies and stops before highestRow-1.
@@ -313,9 +307,9 @@ async function checkRows(startHere, stopHere) {
     // Use stopHere to allow recursive calling of this function while only checking some rows instead of having to iterate over them all multiple times. -1 to check all, 18 to check only bottom row.
     // for loop to iterate through each column
     for(let x=0; x < game.maxCol; x++) {
-      if(game.grid[x][y][0] === false) { 
+      if(game.grid[x][y].occupied === false) { 
         break; // If any of the grid cells on the row are empty, we stop looping this row and move on.
-      } else if(game.grid[x][y][0] === true && x === 9) { // If the last grid cell on row (19) is true, then that means all were true
+      } else if(game.grid[x][y].occupied === true && x === 9) { // If the last grid cell on row (19) is true, then that means all were true
         await clearRows(y);
       }
     }
@@ -327,13 +321,11 @@ async function clearRows(row) { // Row is the row that needs to be cleared.
   for(let i=0; i<game.maxCol; i++) { // i iterates through the columns
     let x = i; // for better readability
     let y = row;
-    let selector = `[data-x="${x}"][data-y="${y}"]`;
-    let targetDiv = document.querySelector(selector);
-    game.grid[x][y][0] = false;
-    game.grid[x][y][1] = game.bgColor;
-    targetDiv.style.backgroundColor = "gold"; // Uncolors the cleared row
+    game.grid[x][y].occupied = false;
+    game.grid[x][y].backgroundColor = game.bgColor;
+    game.grid[x][y].element.style.backgroundColor = "gold"; // Uncolors the cleared row
     await delay(20); // for animation effect
-    targetDiv.style.backgroundColor = game.bgColor;
+    game.grid[x][y].element.style.backgroundColor = game.bgColor;
   }
   const scoreElem = document.getElementById("score");
   scoreElem.innerHTML = `${game.score += 10}`;
@@ -342,17 +334,17 @@ async function clearRows(row) { // Row is the row that needs to be cleared.
       y = a;
       x = b;
       console.log(`Bringing down objects on column ${x} from row ${y} down to row ${y+1}`);
-      if(game.grid[x][y][0] === true) {
+      if(game.grid[x][y].occupied === true) {
         selector = `[data-x="${x}"][data-y="${y}"]`;
         targetDiv = document.querySelector(selector);
         const selector2 = `[data-x="${x}"][data-y="${y+1}"]`;
         const targetDiv2 = document.querySelector(selector2);
-        game.grid[x][y][0] = false;
-        game.grid[x][y+1][0] = true;
-        game.grid[x][y+1][1] = game.grid[x][y][1]; // Sets the color
-        game.grid[x][y][1] = game.bgColor;
-        targetDiv.style.backgroundColor = game.bgColor;
-        targetDiv2.style.backgroundColor = game.grid[x][y+1][1];
+        game.grid[x][y].occupied = false;
+        game.grid[x][y+1].occupied = true;
+        game.grid[x][y+1].backgroundColor = game.grid[x][y].backgroundColor; // Sets the color
+        game.grid[x][y].backgroundColor = game.bgColor;
+        game.grid[x][y].element.style.backgroundColor = game.bgColor;
+        game.grid[x][y+1].element.style.backgroundColor = game.grid[x][y+1].backgroundColor;
       }
     }
   }
@@ -366,23 +358,17 @@ function delay(ms) {
 
 function gameOver() {
   game.started = false;
+  game.highestRow = 21;
+  game.score = 0;
+  const scoreElem = document.getElementById("score");
+  scoreElem.innerHTML = "0";
   renderUpcoming("undraw");
-  gameStateClone(2); // clones the current game state from the gameDefaults object to return values to their defaults.
   // Clear the main board.
   for (let y = 0; y < game.maxRow; y++) {
     for (let x = 0; x < game.maxCol; x++) {
-      const selector = `[data-x="${x}"][data-y="${y}"]`;
-      const targetDiv = document.querySelector(selector);
-      game.grid[x][y] = [false,game.bgColor];
-      targetDiv.style.backgroundColor = game.bgColor;
+      game.grid[x][y].occupied = false;
+      game.grid[x][y].backgroundColor = game.bgColor;
+      game.grid[x][y].element.style.backgroundColor = game.bgColor;
     }
-  }
-}
-
-function gameStateClone(clone) {
-  if(clone === 1) {
-    gameDefaults = structuredClone(game);
-  } else if(clone === 2) {
-    game = structuredClone(gameDefaults);
   }
 }
