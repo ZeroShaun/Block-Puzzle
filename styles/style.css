@@ -22,7 +22,7 @@ p {
 .grid {
  width:300px;
  height:600px;
- background: rgba( 255, 255, 255, 0.25 );
+ background: rgba(48, 48, 46, 0.25);
  box-shadow: 0 8px 32px 0 rgba( 31, 38, 135, 0.37 );
  display:flex;
  flex-wrap:wrap;
@@ -67,9 +67,8 @@ button {
 	display:inline-block;
 	cursor:pointer;
 	color:#ffffff;
-	font-family:Arial;
-	font-size:15px;
-	font-weight:bold;
+	font-family: 'VT323', monospace;
+	font-size:25px;
 	padding:11px 23px;
 	text-decoration:none;
 	text-shadow:0px -1px 0px #2b665e;
