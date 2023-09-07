@@ -1,4 +1,5 @@
 let game = {
+  score:0,
   started:false,
   upcomingBlock: {
     Position:[],
@@ -82,20 +83,20 @@ let game = {
 }
 let gameDefaults = {};
 
-// Grid generation. Since it generates left to right we start iterating through each ROW and generate COLUMNS before moving to the next row.
+// Grid generation. Since DIVs are placed left to right we must use the outer loop for rows and the inner loop for columns. During the first iteration through the columns, we need to initiate them since they do not yet exist.
 window.onload = function() {
-  let container = document.getElementById('container');
-  for (let x = 0; x < game.maxCol; x++) { // Populates each column with 20 rows. Has to be declared outside the loop that populates their values other it overwrights each column every iteration.
-    game.grid[x] = new Array(game.maxRow);
-  }  
+  const container = document.getElementById('container');
   for (let y = 0; y < game.maxRow; y++) {
     for (let x = 0; x < game.maxCol; x++) {
-      let elem = document.createElement('div');
+      if(y === 0) {
+        game.grid.push([]); // Initializes the columns. While y is 0, we are iterating through the columns for the first time, so we need to create them.
+      }
+      const elem = document.createElement('div');
       container.appendChild(elem);
       elem.setAttribute('data-x', x);
       elem.setAttribute('data-y', y);
       elem.setAttribute("onClick","test2(this)"); // remove this test functionality later
-      game.grid[x][y] = [false,game.bgColor];
+      game.grid[x].push([false,game.bgColor]); // Now that the columns are initiated, we can push each row element to it's respective column.
     }
   }
   gameStateClone(1); // Sets gameDefaults to the game object after grids are generated to hold all default values for later.
@@ -234,6 +235,8 @@ function render(drawOrUndraw) {
 }
 
 function renderUpcoming(drawOrUndraw) {
+  let thisColor = "";
+  console.log(`Called to ${drawOrUndraw} positions ${game.upcomingGrid}`);
   if(drawOrUndraw === "draw") {
     thisColor = game.upcomingBlock.Color;
   } else if(drawOrUndraw === "undraw") {
@@ -332,6 +335,8 @@ async function clearRows(row) { // Row is the row that needs to be cleared.
     await delay(20); // for animation effect
     targetDiv.style.backgroundColor = game.bgColor;
   }
+  const scoreElem = document.getElementById("score");
+  scoreElem.innerHTML = `${game.score += 10}`;
   for(let a=row-1; a>=0; a--) {  // bring all shapes down by iterating through every row going up, starting at "row-1" (the row above the row that was cleared) and clearing each occupied cell then pushing it's values to the one cell below it.
     for(let b=0; b<game.maxCol; b++) {
       y = a;
@@ -340,8 +345,8 @@ async function clearRows(row) { // Row is the row that needs to be cleared.
       if(game.grid[x][y][0] === true) {
         selector = `[data-x="${x}"][data-y="${y}"]`;
         targetDiv = document.querySelector(selector);
-        let selector2 = `[data-x="${x}"][data-y="${y+1}"]`;
-        let targetDiv2 = document.querySelector(selector2);
+        const selector2 = `[data-x="${x}"][data-y="${y+1}"]`;
+        const targetDiv2 = document.querySelector(selector2);
         game.grid[x][y][0] = false;
         game.grid[x][y+1][0] = true;
         game.grid[x][y+1][1] = game.grid[x][y][1]; // Sets the color
