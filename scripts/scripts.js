@@ -79,7 +79,7 @@ let game = {
   animationDelay:500,
 }
 
-// Grid generation. Since DIVs are placed left to right we must use the outer loop for rows and the inner loop for columns. During the first iteration through the columns, we need to initiate them since they do not yet exist.
+// Grid generation. Since DIVs are placed left to right we must the outer loop for rows and the inner loop for columns. During the first iteration through the columns, we need to initiate them since they do not yet exist.
 window.onload = function() {
   const container = document.getElementById('container');
   for (let y = 0; y < game.maxRow; y++) {
@@ -124,44 +124,20 @@ document.addEventListener("keydown", event => {
 
 function generateUpcoming() {
   renderUpcoming("undraw");
-  const randomNum = Math.floor(Math.random()*((7+1)-1)+1);
-  switch(randomNum) {
-    case 1:
-      game.upcomingBlock = game.shapeL;
-      game.upcomingGrid = [3,7,6,5];
-      break;
-
-    case 2:
-      game.upcomingBlock = game.shapeJ;
-      game.upcomingGrid = [2,6,7,8];
-      break;
-
-    case 3:
-      game.upcomingBlock = game.shapeT;
-      game.upcomingGrid = [3,6,7,8];
-      break;
-
-    case 4:
-      game.upcomingBlock = game.shapeO;
-      game.upcomingGrid = [2,3,6,7];
-      break;
-
-    case 5:
-      game.upcomingBlock = game.shapeI;
-      game.upcomingGrid = [5,6,7,8];
-      break;
-
-    case 6:
-      game.upcomingBlock = game.shapeS;
-      game.upcomingGrid = [3,2,5,6];
-      break;
-
-    case 7:
-      game.upcomingBlock = game.shapeZ;
-      game.upcomingGrid = [2,3,7,8];
-      break;
-
-  }
+  // A 2D array to store a reference/pointer to each shape object and its corresponding DIV IDs to render for the upcoming shape graphic.
+  const upcomingArray = [
+    [game.shapeL, [3,7,6,5]],
+    [game.shapeJ, [2,6,7,8]],
+    [game.shapeT, [3,6,7,8]],
+    [game.shapeO, [2,3,6,7]],
+    [game.shapeI, [5,6,7,8]],
+    [game.shapeS, [3,2,5,6]],
+    [game.shapeZ, [2,3,7,8]],
+  ];
+  const max = upcomingArray.length-1;
+  const index = Math.floor(Math.random()*((max+1)-0)+0); // Generates a random number between 0-max.
+  game.upcomingBlock = upcomingArray[index][0]; // Set the upcoming block to the chosen shape
+  game.upcomingGrid = upcomingArray[index][1]; // Store the DIV IDs we need to render for the upcoming graphic.
   renderUpcoming("draw");
 }
 
@@ -175,7 +151,7 @@ function test2(ele) {
 }
 
 function spawnShape() {
-  game.activeShape = structuredClone(game.upcomingBlock);
+  game.activeShape = structuredClone(game.upcomingBlock); // Clones the upcomingBlock into a new object
   render("draw");
   game.activeShape.fallInterval = setInterval(function() {
     let orientation = game.activeShape.Orientation;
@@ -210,8 +186,8 @@ function flipShape(flipDir) {
 // Renders or undraws the currently active shape
 function render(drawOrUndraw) {
   let renderColor;
-  let orientation = game.activeShape.Orientation;
-  let position = game.activeShape.Position[orientation];
+  const orientation = game.activeShape.Orientation;
+  const position = game.activeShape.Position[orientation];
   if(drawOrUndraw === "draw") {
     renderColor = game.activeShape.Color;
   } else if(drawOrUndraw === "undraw") {
@@ -276,8 +252,8 @@ function collisionCheck(checkPosition, action) {
 }
 
 function settleShape(){
-  let orientation = game.activeShape.Orientation;
-  let position = game.activeShape.Position[orientation];
+  const orientation = game.activeShape.Orientation;
+  const position = game.activeShape.Position[orientation];
   let lowestRow = game.activeShape.Position[0][0][1]; // Sets up the variable for holding the lowest row that the shape occupies.
   for(let i=0; i<position.length; i++){ // Iterate through the active position's shape pieces.
     if(position[i][1] > lowestRow) { // If the current piece of the shape is on a lower row than the previous
