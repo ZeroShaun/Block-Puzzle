@@ -109,14 +109,14 @@ function startGame() {
 document.addEventListener("keydown", event => {
   const orientation = game.activeShape.Orientation;
   const position = game.activeShape.Position[orientation];
-  if (event.code === "ArrowLeft" && !collisionCheck(position,"left")) {
-      moving("left");
-  } else if(event.code === "ArrowRight" && !collisionCheck(position,"right")) {
-    moving("right");
-  } else if(event.code === "ArrowDown" && !collisionCheck(position,"fall")) {
-    moving("fall");
+  if (event.code === "ArrowLeft" && !collisionCheck(position, -1, 0)) { // check left
+      moving(-1, 0);
+  } else if(event.code === "ArrowRight" && !collisionCheck(position, 1, 0)) { // check right
+    moving(1, 0);
+  } else if(event.code === "ArrowDown" && !collisionCheck(position, 0, 1)) {
+    moving(0, 1);
   } else if(event.code === "ArrowUp") {
-      flipShape("right");
+    flipShape("right");
   } else if(event.code === "Digit0") {
     flipShape("left");
   }
@@ -124,7 +124,7 @@ document.addEventListener("keydown", event => {
 
 function generateUpcoming() {
   renderUpcoming("undraw");
-  // A 2D array to store a reference/pointer to each shape object and its corresponding DIV IDs to render for the upcoming shape graphic.
+  // A 2D array to store a reference/pointer to each shape object and an array storing its corresponding DIV IDs that need to be rendered for the upcoming graphic.
   const upcomingArray = [
     [game.shapeL, [3,7,6,5]],
     [game.shapeJ, [2,6,7,8]],
@@ -156,9 +156,9 @@ function spawnShape() {
   game.activeShape.fallInterval = setInterval(function() {
     let orientation = game.activeShape.Orientation;
     let position = game.activeShape.Position[orientation];
-    if(!collisionCheck(position,"fall")) {
-      moving("fall");}
-  }, game.animationDelay); 
+    if(!collisionCheck(position, 0, 1)) {
+      moving(0, 1);}
+  }, game.animationDelay);
   generateUpcoming();
 }
 
@@ -167,13 +167,13 @@ function flipShape(flipDir) {
   const lastOrientation = game.activeShape.Position.length-1;
   const currentOrientation = game.activeShape.Orientation;
   if(lastOrientation === 0) return;
-  if(flipDir === "left" && currentOrientation === 0 && !collisionCheck(game.activeShape.Position[lastOrientation],"flip")) {
+  if(flipDir === "left" && currentOrientation === 0 && !collisionCheck(game.activeShape.Position[lastOrientation], 0, 0)) {
     newOrientation = lastOrientation;
-  } else if(flipDir === "left" && currentOrientation !== 0 && !collisionCheck(game.activeShape.Position[currentOrientation-1],"flip")) {
+  } else if(flipDir === "left" && currentOrientation !== 0 && !collisionCheck(game.activeShape.Position[currentOrientation-1], 0, 0)) {
     newOrientation = currentOrientation - 1;
-  } else if(flipDir === "right" && currentOrientation === lastOrientation && !collisionCheck(game.activeShape.Position[0],"flip")) {
+  } else if(flipDir === "right" && currentOrientation === lastOrientation && !collisionCheck(game.activeShape.Position[0], 0, 0)) {
     newOrientation = 0;
-  } else if(flipDir === "right" && currentOrientation !== lastOrientation && !collisionCheck(game.activeShape.Position[currentOrientation+1],"flip")) {
+  } else if(flipDir === "right" && currentOrientation !== lastOrientation && !collisionCheck(game.activeShape.Position[currentOrientation+1], 0, 0)) {
     newOrientation = currentOrientation + 1;
   }
   if(newOrientation !== -1) {
@@ -217,38 +217,38 @@ function renderUpcoming(drawOrUndraw) {
   });
 }
 
-function moving(direction) {
-  render("undraw"); // Undraws the current location before updating its corrdinates.
-  for(i=0; i<game.activeShape.Position.length; i++) { // Loops through each shape's orientation, including the active one
-    for(b=0; b<game.activeShape.Position[0].length; b++){ // loops through each orientation's parts
-      if(direction === "right") {
-        game.activeShape.Position[i][b][0] += 1; // Sets every part of every orientation to the row right of it. i = orienation, b = part, 0 is x and 1 is y
-      } else if(direction === "left" ) {
-          game.activeShape.Position[i][b][0] -= 1; // Sets every part of every orientation to the row left of it.
-      } else if(direction === "fall") {
-          game.activeShape.Position[i][b][1] += 1; // Sets every part of every orientation to the row below it.
-      }
+function moving(dx, dy) {
+  render("undraw"); // Undraws the current location before updating it's coordinates.
+  for(const orientation of game.activeShape.Position) { // for each orientation of the active shape's position array
+    for(const piece of orientation) { // for each piece (an array) of each orientation
+      console.log(`Working with piece:`)
+      console.log(piece);
+      piece[0] += dx; // Add dx to the first (x) coordinate.
+      piece[1] += dy; // Add dy to the second (y) coordinate.
+      console.log("Piece after fall:");
+      console.log(piece);
     }
   }
   render("draw"); // Draws the new location after the coordinates are updated.
 }
 
-function collisionCheck(checkPosition, action) {
+function collisionCheck(checkPosition, dx, dy) {
   for(let i=0; i<checkPosition.length; i++) {
     const x = checkPosition[i][0];
     const y = checkPosition[i][1];
-    if(action === "fall" && (y >= game.maxRow-1 || game.grid[x][y+1].occupied === true)) {
+    if(dx === 0 && dy === 1 && (y === game.maxRow-1 || game.grid[x+dx][y+dy].occupied === true)) { // if dx is 0 and dy is 1 we are falling, thus we check if we are on the floor row or a block is right below us.
       settleShape();
       return true; // collision is true
-    } else if(action === "left" && (x === 0 || game.grid[x-1][y].occupied === true)) {
+    } else if(!isInsideGrid(x+dx, y+dy) || game.grid[x+dx][y+dy].occupied === true) {
       return true; // collision is true
-    } else if(action === "right" && (x >= game.maxCol-1 || game.grid[x+1][y].occupied === true)) {
-      return true; // collision is true
-    } else if(action === "flip" && (x < 0 || x >= game.maxCol || y < 0 || y >= game.maxRow || game.grid[x][y].occupied === true)) {
-      return true; // invalid flip orientation because it's either off the grid or occupies an already occupied location.
     }
   }
-  return false;
+  return false; // collision not found
+
+  // Helper function just to shorten up the if statement above.
+  function isInsideGrid(x, y) {
+    return x >= 0 && x < game.maxCol && y >= 0 && y < game.maxRow;
+  }
 }
 
 function settleShape(){
@@ -312,8 +312,6 @@ async function clearRows(row) { // Row is the row that needs to be cleared.
       if(game.grid[x][y].occupied === true) {
         selector = `[data-x="${x}"][data-y="${y}"]`;
         targetDiv = document.querySelector(selector);
-        const selector2 = `[data-x="${x}"][data-y="${y+1}"]`;
-        const targetDiv2 = document.querySelector(selector2);
         game.grid[x][y].occupied = false;
         game.grid[x][y+1].occupied = true;
         game.grid[x][y+1].backgroundColor = game.grid[x][y].backgroundColor; // Sets the color
@@ -339,13 +337,14 @@ function gameOver() {
   scoreElem.innerHTML = "0";
   renderUpcoming("undraw");
   // Clear the main board.
-  for (let y = 0; y < game.maxRow; y++) {
-    for (let x = 0; x < game.maxCol; x++) {
-      if(game.grid[x][y].occupied === true) { // Skips coloring/updating already empty DIVs.
-        game.grid[x][y].occupied = false;
-        game.grid[x][y].backgroundColor = game.bgColor;
-        game.grid[x][y].element.style.backgroundColor = game.bgColor;
+  for(const column of game.grid) { // For each column (first index) of the game.grid array
+    for(const gridObject of column) { // for each object held inside of the row index OF each column
+      if(gridObject.occupied === true) { // Skips coloring/updating already empty DIVs.
+        gridObject.occupied = false;
+        gridObject.backgroundColor = game.bgColor;
+        gridObject.element.style.backgroundColor = game.bgColor;
       }
     }
   }
 }
+
