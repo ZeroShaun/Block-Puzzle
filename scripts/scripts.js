@@ -79,7 +79,7 @@ let game = {
   animationDelay:500,
 }
 
-// Grid generation. Since DIVs are placed left to right we must the outer loop for rows and the inner loop for columns. During the first iteration through the columns, we need to initiate them since they do not yet exist.
+// Grid generation. Since DIVs are placed left to right in the grid due to wrapping we must the outer loop for rows and the inner loop for columns. During the first iteration through the columns, we need to initiate them since they do not yet exist.
 window.onload = function() {
   const container = document.getElementById('container');
   for (let y = 0; y < game.maxRow; y++) {
@@ -116,9 +116,9 @@ document.addEventListener("keydown", event => {
   } else if(event.code === "ArrowDown" && !collisionCheck(position, 0, 1)) {
     moving(0, 1);
   } else if(event.code === "ArrowUp") {
-    flipShape("right");
+    flipShape(1);
   } else if(event.code === "Digit0") {
-    flipShape("left");
+    flipShape(-1);
   }
 });
 
@@ -154,32 +154,27 @@ function spawnShape() {
   game.activeShape = structuredClone(game.upcomingBlock); // Clones the upcomingBlock into a new object
   render("draw");
   game.activeShape.fallInterval = setInterval(function() {
-    let orientation = game.activeShape.Orientation;
-    let position = game.activeShape.Position[orientation];
+    const orientation = game.activeShape.Orientation;
+    const position = game.activeShape.Position[orientation];
     if(!collisionCheck(position, 0, 1)) {
       moving(0, 1);}
   }, game.animationDelay);
   generateUpcoming();
 }
 
-function flipShape(flipDir) {
-  let newOrientation = -1;
-  const lastOrientation = game.activeShape.Position.length-1;
-  const currentOrientation = game.activeShape.Orientation;
-  if(lastOrientation === 0) return;
-  if(flipDir === "left" && currentOrientation === 0 && !collisionCheck(game.activeShape.Position[lastOrientation], 0, 0)) {
-    newOrientation = lastOrientation;
-  } else if(flipDir === "left" && currentOrientation !== 0 && !collisionCheck(game.activeShape.Position[currentOrientation-1], 0, 0)) {
-    newOrientation = currentOrientation - 1;
-  } else if(flipDir === "right" && currentOrientation === lastOrientation && !collisionCheck(game.activeShape.Position[0], 0, 0)) {
-    newOrientation = 0;
-  } else if(flipDir === "right" && currentOrientation !== lastOrientation && !collisionCheck(game.activeShape.Position[currentOrientation+1], 0, 0)) {
-    newOrientation = currentOrientation + 1;
+function flipShape(adj) {
+  if(game.activeShape.Position.length === 1) { // If this shape has only one orientation.
+    return; // we return
   }
-  if(newOrientation !== -1) {
+  const orientationCount = game.activeShape.Position.length;
+  const currentOrientation = game.activeShape.Orientation;
+  const newOrientation = (currentOrientation + adj + orientationCount) % orientationCount; // Use modular arithmetic to get the new orienation based on the adjustment.
+  if(!collisionCheck(game.activeShape.Position[newOrientation], 0, 0)) {
     render("undraw"); // Uncolor the current position
-    game.activeShape.Orientation = newOrientation;
+    game.activeShape.Orientation = newOrientation; // Set the new orientation to the active one
     render("draw"); // Color the new updated position
+  } else {
+    return;
   }
 }
 
@@ -221,12 +216,8 @@ function moving(dx, dy) {
   render("undraw"); // Undraws the current location before updating it's coordinates.
   for(const orientation of game.activeShape.Position) { // for each orientation of the active shape's position array
     for(const piece of orientation) { // for each piece (an array) of each orientation
-      console.log(`Working with piece:`)
-      console.log(piece);
       piece[0] += dx; // Add dx to the first (x) coordinate.
       piece[1] += dy; // Add dy to the second (y) coordinate.
-      console.log("Piece after fall:");
-      console.log(piece);
     }
   }
   render("draw"); // Draws the new location after the coordinates are updated.
