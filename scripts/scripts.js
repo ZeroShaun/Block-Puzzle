@@ -1,21 +1,34 @@
+const MAX_ROWS = 20;
+const MAX_COLS = 10;
+const HIGHEST_ROW = MAX_ROWS+1;
+const ANIMATION_DELAY = 500; // Delay when clearing rows and dragging blocks down
+const BG_COLOR = "rgba( 255, 255, 255, 0.25 )";
+const L_COLOR = "rgb(224, 86, 0)";
+const J_COLOR = "rgb(0, 0, 255)";
+const T_COLOR = "rgb(170, 0, 255)";
+const O_COLOR = "rgb(255, 244, 0)";
+const I_COLOR = "rgb(166, 244, 255)";
+const S_COLOR = "rgb(0, 247, 0)";
+const Z_COLOR = "rgb(255, 0, 0)";
+
 class Game {
   score = 0;
   started = false;
   upcomingBlock = {};
-  columns = 10; // Defines the maximum columns.
-  rows = 20; // Defines the maximum rows.
+  columns = MAX_COLS; // Defines the maximum columns.
+  rows = MAX_ROWS; // Defines the maximum rows.
   grid = []; // First index is the x coordinate, second is the y, then 0 = true or false and 1 = color. So grid[x][y][0] returns true or false and grid[x][y][1] returns the color.
   activeShape = {};
-  bgColor = "rgba( 255, 255, 255, 0.25 )";
-  highestRow = 21; // Used to store the highest row that's occupied to prevent unnecessarily checking a bunch of empty rows. Set to one more than the maximum row.
+  bgColor = BG_COLOR;
+  highestRow = HIGHEST_ROW; // Used to store the highest row that's occupied to prevent unnecessarily checking a bunch of empty rows. Set to one more than the maximum row.
   upcomingGrid = [];
-  animationDelay = 500;
+  animationDelay = ANIMATION_DELAY;
 }
 
 class Cell {
   constructor(element) { // Takes an element parameter so we can set references to each DOM element a cell object represents.
     this.occupied = false;
-    this.backgroundColor = "rgba( 255, 255, 255, 0.25 )"; // Tracks the background color of each cell so we can "drop" blocks when a row is cleared.
+    this.backgroundColor = BG_COLOR; // Tracks the background color of each cell so we can "drop" blocks when a row is cleared.
     this.element = element; // Sets the DOM element reference.
   }
 }
@@ -34,7 +47,7 @@ class Block {
           [[5,2],[5,1],[4,1],[3,1]],
           [[3,2],[4,2],[4,1],[4,0]],
         ];
-        this.color = "rgb(224, 86, 0)";
+        this.color = L_COLOR;
         break;
 
       case "J":
@@ -44,7 +57,7 @@ class Block {
           [[5,2],[5,1],[4,1],[3,1]],
           [[3,2],[4,2],[4,1],[4,0]],
         ];
-        this.color = "rgb(0, 0, 255)";
+        this.color = J_COLOR;
         break;
 
       case "T":
@@ -54,14 +67,14 @@ class Block {
           [[3,1],[4,1],[5,1],[4,2]], 
           [[4,2],[4,1],[4,0],[3,1]], 
         ];
-        this.color = "rgb(170, 0, 255)";
+        this.color = T_COLOR;
         break;
 
       case "O":
         this.position = [
           [[4,0],[5,0],[4,1],[5,1]], 
         ];
-        this.color = "rgb(255, 244, 0)";
+        this.color = O_COLOR;
         break;
 
       case "I":
@@ -71,7 +84,7 @@ class Block {
           [[3,2],[4,2],[5,2],[6,2]], 
           [[4,0],[4,1],[4,2],[4,3]], 
         ];
-        this.color = "rgb(166, 244, 255)";
+        this.color = I_COLOR;
         break;
 
       case "S":
@@ -81,7 +94,7 @@ class Block {
           [[5,1],[4,1],[4,2],[3,2]], 
           [[4,2],[4,1],[3,1],[3,0]], 
         ];
-        this.color = "rgb(0, 247, 0)";
+        this.color = S_COLOR;
         break;
 
       case "Z":
@@ -91,7 +104,7 @@ class Block {
           [[5,2],[4,2],[4,1],[3,1]], 
           [[3,2],[3,1],[4,1],[4,0]], 
         ];
-        this.color = "rgb(255, 0, 0)";
+        this.color = Z_COLOR;
         break;
     }
   } 
