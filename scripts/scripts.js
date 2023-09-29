@@ -47,52 +47,89 @@ class Block {
         this.color = "rgb(0, 0, 255)";
         break;
 
-        case "T":
-          this.position = [
-            [[3,1],[4,1],[5,1],[4,0]], 
-            [[4,0],[4,1],[4,2],[5,1]], 
-            [[3,1],[4,1],[5,1],[4,2]], 
-            [[4,2],[4,1],[4,0],[3,1]], 
-          ];
-          this.color = "rgb(170, 0, 255)";
-          break;
+      case "T":
+        this.position = [
+          [[3,1],[4,1],[5,1],[4,0]], 
+          [[4,0],[4,1],[4,2],[5,1]], 
+          [[3,1],[4,1],[5,1],[4,2]], 
+          [[4,2],[4,1],[4,0],[3,1]], 
+        ];
+        this.color = "rgb(170, 0, 255)";
+        break;
 
-          case "O":
-            this.position = [
-              [[4,0],[5,0],[4,1],[5,1]], 
-            ];
-            this.color = "rgb(255, 244, 0)";
-            break;
+      case "O":
+        this.position = [
+          [[4,0],[5,0],[4,1],[5,1]], 
+        ];
+        this.color = "rgb(255, 244, 0)";
+        break;
 
-            case "I":
-              this.position = [
-                [[3,1],[4,1],[5,1],[6,1]], 
-                [[5,0],[5,1],[5,2],[5,3]], 
-                [[3,2],[4,2],[5,2],[6,2]], 
-                [[4,0],[4,1],[4,2],[4,3]], 
-              ];
-              this.color = "rgb(166, 244, 255)";
-              break;
+      case "I":
+        this.position = [
+          [[3,1],[4,1],[5,1],[6,1]], 
+          [[5,0],[5,1],[5,2],[5,3]], 
+          [[3,2],[4,2],[5,2],[6,2]], 
+          [[4,0],[4,1],[4,2],[4,3]], 
+        ];
+        this.color = "rgb(166, 244, 255)";
+        break;
 
-              case "S":
-                this.position = [
-                  [[3,1],[4,1],[4,0],[5,0]], 
-                  [[4,0],[4,1],[5,1],[5,2]], 
-                  [[5,1],[4,1],[4,2],[3,2]], 
-                  [[4,2],[4,1],[3,1],[3,0]], 
-                ];
-                this.color = "rgb(0, 247, 0)";
-                break;
+      case "S":
+        this.position = [
+          [[3,1],[4,1],[4,0],[5,0]], 
+          [[4,0],[4,1],[5,1],[5,2]], 
+          [[5,1],[4,1],[4,2],[3,2]], 
+          [[4,2],[4,1],[3,1],[3,0]], 
+        ];
+        this.color = "rgb(0, 247, 0)";
+        break;
 
-                case "Z":
-                  this.position = [
-                    [[3,0],[4,0],[4,1],[5,1]], 
-                    [[5,0],[5,1],[4,1],[4,2]], 
-                    [[5,2],[4,2],[4,1],[3,1]], 
-                    [[3,2],[3,1],[4,1],[4,0]], 
-                  ];
-                  this.color = "rgb(255, 0, 0)";
-                  break;
+      case "Z":
+        this.position = [
+          [[3,0],[4,0],[4,1],[5,1]], 
+          [[5,0],[5,1],[4,1],[4,2]], 
+          [[5,2],[4,2],[4,1],[3,1]], 
+          [[3,2],[3,1],[4,1],[4,0]], 
+        ];
+        this.color = "rgb(255, 0, 0)";
+        break;
+    }
+  } 
+
+  startFalling() {
+    this.fallInterval = setInterval(() => { // Starts the falling movement and stores the interval in fallInterval. Must use an arrow function so "this" is not scoped in the interval function itself.
+      const orientation = this.orientation;
+      const position = this.position[orientation];
+      if(!collisionCheck(position, 0, 1)) {
+        this.move(0, 1);} // Sets the interval to call the move function with direction down for falling
+    }, game.animationDelay);
+    generateUpcoming();
+  }
+
+  move(dx, dy) {
+    render("undraw"); // Undraws the current location before updating it's coordinates.
+    for(const orientation of this.position) { // for each orientation of the active shape's position array
+      for(const piece of orientation) { // for each piece (an array) of each orientation
+        piece[0] += dx; // Add dx to the (x) coordinate.
+        piece[1] += dy; // Add dy to the (y) coordinate.
+      }
+    }
+    render("draw"); // Draws the new location after the coordinates are updated.
+  }
+
+  flip(adj) {
+    if(this.position.length === 1) { // If this shape has only one orientation.
+      return; // we return
+    }
+    const orientationCount = this.position.length;
+    const currentOrientation = this.orientation;
+    const newOrientation = (currentOrientation + adj + orientationCount) % orientationCount; // Use modular arithmetic to get the new orienation based on the adjustment.
+    if(!collisionCheck(this.position[newOrientation], 0, 0)) {
+      render("undraw"); // Uncolor the current position
+      this.orientation = newOrientation; // Set the new orientation to the active one
+      render("draw"); // Color the new updated position
+    } else {
+      return;
     }
   }
 }
@@ -131,15 +168,15 @@ document.addEventListener("keydown", event => {
   const orientation = game.activeShape.orientation;
   const position = game.activeShape.position[orientation];
   if (event.code === "ArrowLeft" && !collisionCheck(position, -1, 0)) { // check left
-      moving(-1, 0);
+    game.activeShape.move(-1, 0);
   } else if(event.code === "ArrowRight" && !collisionCheck(position, 1, 0)) { // check right
-    moving(1, 0);
+    game.activeShape.move(1, 0);
   } else if(event.code === "ArrowDown" && !collisionCheck(position, 0, 1)) {
-    moving(0, 1);
+    game.activeShape.move(0, 1);
   } else if(event.code === "ArrowUp") {
-    flipShape(1);
+    game.activeShape.flip(1);
   } else if(event.code === "Digit0") {
-    flipShape(-1);
+    game.activeShape.flip(-1);
   }
 });
 
@@ -178,30 +215,13 @@ function spawnShape() {
   game.activeShape = new Block(shape); // Creates a new block based on the block type of the upcomingBlock object.
   console.log(game.activeShape);
   render("draw");
-  game.activeShape.fallInterval = setInterval(function() {
-    const orientation = game.activeShape.orientation;
-    const position = game.activeShape.position[orientation];
-    if(!collisionCheck(position, 0, 1)) {
-      moving(0, 1);}
-  }, game.animationDelay);
-  generateUpcoming();
-}
+  game.activeShape.startFalling(); // Start moving the active shape
+} 
 
-function flipShape(adj) {
-  if(game.activeShape.position.length === 1) { // If this shape has only one orientation.
-    return; // we return
-  }
-  const orientationCount = game.activeShape.position.length;
-  const currentOrientation = game.activeShape.orientation;
-  const newOrientation = (currentOrientation + adj + orientationCount) % orientationCount; // Use modular arithmetic to get the new orienation based on the adjustment.
-  if(!collisionCheck(game.activeShape.position[newOrientation], 0, 0)) {
-    render("undraw"); // Uncolor the current position
-    game.activeShape.orientation = newOrientation; // Set the new orientation to the active one
-    render("draw"); // Color the new updated position
-  } else {
-    return;
-  }
-}
+// Put this inside of the Block class as a method, rename to flip(adj), and change "game.activeShape" to "this" inside the code block. Find out where this function is called and adjust how it's called to game.activeShape.flip.
+/*function flipShape(adj) {
+
+}*/
 
 // Renders or undraws the currently active shape
 function render(drawOrUndraw) {
@@ -235,17 +255,6 @@ function renderUpcoming(drawOrUndraw) {
     const divElement = document.getElementById(`${divID}`);
     divElement.style.backgroundColor = renderColor;
   });
-}
-
-function moving(dx, dy) {
-  render("undraw"); // Undraws the current location before updating it's coordinates.
-  for(const orientation of game.activeShape.position) { // for each orientation of the active shape's position array
-    for(const piece of orientation) { // for each piece (an array) of each orientation
-      piece[0] += dx; // Add dx to the first (x) coordinate.
-      piece[1] += dy; // Add dy to the second (y) coordinate.
-    }
-  }
-  render("draw"); // Draws the new location after the coordinates are updated.
 }
 
 function collisionCheck(checkPosition, dx, dy) {
