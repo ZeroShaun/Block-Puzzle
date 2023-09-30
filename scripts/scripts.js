@@ -59,6 +59,7 @@ class Cell {
     this.occupied = false;
     this.backgroundColor = BG_COLOR; // Tracks the background color of each cell so we can "drop" blocks when a row is cleared.
     this.element = element; // Sets the DOM element reference.
+    element.style.backgroundColor = game.bgColor; // Make sure the grid is set to default background color
   }
 }
 
@@ -190,7 +191,6 @@ class Grid {
        }
        const element = document.querySelector(`[data-x="${x}"][data-y="${y}"]`); // Grab the respective DOM element
        this.cell[x][y] = new Cell(element); // Create a new cell in this index and send the respective DOM element as a parameter so it can hold it as a reference
-       this.cell[x][y].element.style.backgroundColor = game.bgColor; // Make sure the grid is set to default background color
       }
     }
   }
