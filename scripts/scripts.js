@@ -2,7 +2,7 @@ const MAX_ROWS = 20;
 const MAX_COLS = 10;
 const HIGHEST_ROW = MAX_ROWS+1;
 const ANIMATION_DELAY = 500; // Delay when clearing rows and dragging blocks down
-const BG_COLOR = "rgba( 255, 255, 255, 0.25 )";
+const BG_COLOR = "rgba( 255, 255, 255, 0.25 )"; // Could change these to classes later and instead of painting the DIV background, we can add/remove CSS classes for rendering.
 const L_COLOR = "rgb(224, 86, 0)";
 const J_COLOR = "rgb(0, 0, 255)";
 const T_COLOR = "rgb(170, 0, 255)";
@@ -12,17 +12,46 @@ const S_COLOR = "rgb(0, 247, 0)";
 const Z_COLOR = "rgb(255, 0, 0)";
 
 class Game {
-  score = 0;
-  started = false;
-  upcomingBlock = {};
-  columns = MAX_COLS; // Defines the maximum columns.
-  rows = MAX_ROWS; // Defines the maximum rows.
-  grid = []; // First index is the x coordinate, second is the y, then 0 = true or false and 1 = color. So grid[x][y][0] returns true or false and grid[x][y][1] returns the color.
-  activeShape = {};
-  bgColor = BG_COLOR;
-  highestRow = HIGHEST_ROW; // Used to store the highest row that's occupied to prevent unnecessarily checking a bunch of empty rows. Set to one more than the maximum row.
-  upcomingGrid = [];
-  animationDelay = ANIMATION_DELAY;
+  constructor() {
+    this.score = 0;
+    this.started = false;
+    this.upcomingBlock = {};
+    this.columns = MAX_COLS; // Defines the maximum columns.
+    this.rows = MAX_ROWS; // Defines the maximum rows.
+    this.grid = []; // First index is the x coordinate, second is the y, then 0 = true or false and 1 = color. So grid.cell[x][y][0] returns true or false and grid.cell[x][y][1] returns the color.
+    this.activeShape = {};
+    this.bgColor = BG_COLOR;
+    this.highestRow = HIGHEST_ROW; // Used to store the highest row that's occupied to prevent unnecessarily checking a bunch of empty rows. Set to one more than the maximum row.
+    this.upcomingGrid = [];
+    this.animationDelay = ANIMATION_DELAY;
+  }
+
+  spawnShape() {
+    const shape = this.upcomingBlock.shape;
+    this.activeShape = new Block(shape); // Creates a new block based on the block type of the upcomingBlock object.
+    render("draw");
+    this.activeShape.startFalling(); // Start moving the active shape
+  } 
+
+  generateUpcoming() {
+    renderUpcoming("undraw");
+    // A 2D array to store a reference/pointer to each shape object and an array storing its corresponding DIV IDs that need to be rendered for the upcoming graphic.
+    const upcomingArray = [
+      ["L", [3,7,6,5]],
+      ["J", [2,6,7,8]],
+      ["T", [3,6,7,8]],
+      ["O", [2,3,6,7]],
+      ["I", [5,6,7,8]],
+      ["S", [3,2,5,6]],
+      ["Z", [2,3,7,8]],
+    ];
+    const max = upcomingArray.length-1;
+    const index = Math.floor(Math.random()*((max+1)-0)+0); // Generates a random number between 0-max.
+    const shape = upcomingArray[index][0];
+    this.upcomingBlock = new Block(shape); // Create a new block object from the randomly generated shape and stores it in the game.upcomingBlock property. 
+    this.upcomingGrid = upcomingArray[index][1]; // Store the DIV IDs we need to render for the upcoming graphic.
+    renderUpcoming("draw");
+  }
 }
 
 class Cell {
@@ -116,7 +145,7 @@ class Block {
       if(!collisionCheck(position, 0, 1)) {
         this.move(0, 1);} // Sets the interval to call the move function with direction down for falling
     }, game.animationDelay);
-    generateUpcoming();
+    game.generateUpcoming();
   }
 
   move(dx, dy) {
@@ -147,31 +176,48 @@ class Block {
   }
 }
 
-let game = new Game(); // Create a new game instance
-const grid = []; // Initialize the grid array that will store grid cell objects
+class Grid {
+  constructor() {
+    this.cell = [];
+    this.generateGrid();
+  }
 
-// Grid generation. Since DIVs are placed left to right in the grid due to wrapping we must the outer loop for rows and the inner loop for columns. During the first iteration through the columns, we need to initiate them since they do not yet exist.
+  generateGrid() {
+    for (let y = 0; y < game.rows; y++) {
+      for (let x = 0; x < game.columns; x++) {
+        if(y === 0) {
+          this.cell.push([]); // Initializes the columns. While y is 0, we are iterating through the columns for the first time, so we need to create them.
+       }
+       const element = document.querySelector(`[data-x="${x}"][data-y="${y}"]`); // Grab the respective DOM element
+       this.cell[x][y] = new Cell(element); // Create a new cell in this index and send the respective DOM element as a parameter so it can hold it as a reference
+       this.cell[x][y].element.style.backgroundColor = game.bgColor; // Make sure the grid is set to default background color
+      }
+    }
+  }
+}
+
+let game = new Game(); // Create a new game instance
+let grid;
+
+// Generate the DIV elements we need for the grid.
 window.onload = function() {
   const container = document.getElementById('container');
   for (let y = 0; y < game.rows; y++) {
     for (let x = 0; x < game.columns; x++) {
-      if(y === 0) {
-        grid.push([]); // Initializes the columns. While y is 0, we are iterating through the columns for the first time, so we need to create them.
-     }
       const elem = document.createElement('div');
       container.appendChild(elem);
       elem.setAttribute('data-x', x);
       elem.setAttribute('data-y', y);
       elem.setAttribute("onClick","test2(this)"); // remove this test functionality later
-      grid[x][y] = new Cell(elem); // Now that the columns are initiated, we push each row index to its respective column, which will contain an object holding its attributes and a reference to its respective DOM element.
     }
   }
+  grid = new Grid();
 }
 
 function startGame() {
   if(!game.started) {
-    generateUpcoming();
-    spawnShape();
+    game.generateUpcoming();
+    game.spawnShape();
     game.started = true;
   } 
 }
@@ -193,48 +239,15 @@ document.addEventListener("keydown", event => {
   }
 });
 
-function generateUpcoming() {
-  renderUpcoming("undraw");
-  // A 2D array to store a reference/pointer to each shape object and an array storing its corresponding DIV IDs that need to be rendered for the upcoming graphic.
-  const upcomingArray = [
-    ["L", [3,7,6,5]],
-    ["J", [2,6,7,8]],
-    ["T", [3,6,7,8]],
-    ["O", [2,3,6,7]],
-    ["I", [5,6,7,8]],
-    ["S", [3,2,5,6]],
-    ["Z", [2,3,7,8]],
-  ];
-  const max = upcomingArray.length-1;
-  const index = Math.floor(Math.random()*((max+1)-0)+0); // Generates a random number between 0-max.
-  const shape = upcomingArray[index][0];
-  game.upcomingBlock = new Block(shape); // Create a new block object from the randomly generated shape and stores it in the game.upcomingBlock property. 
-  game.upcomingGrid = upcomingArray[index][1]; // Store the DIV IDs we need to render for the upcoming graphic.
-  renderUpcoming("draw");
-}
-
 // Test functionality
 function test2(ele) {
+  console.log(ele)
   let x = ele.getAttribute("data-x");
   let y = ele.getAttribute("data-y");
   console.log(`X: ${ele.getAttribute("data-x")}`);
   console.log(`Y: ${ele.getAttribute("data-y")}`);
-  console.log(`The color of this grid is ${grid[x][y].backgroundColor}`);
+  console.log(`The color of this grid is ${grid.cell[x][y].backgroundColor}`);
 }
-
-function spawnShape() {
-  const shape = game.upcomingBlock.shape;
-  console.log(shape);
-  game.activeShape = new Block(shape); // Creates a new block based on the block type of the upcomingBlock object.
-  console.log(game.activeShape);
-  render("draw");
-  game.activeShape.startFalling(); // Start moving the active shape
-} 
-
-// Put this inside of the Block class as a method, rename to flip(adj), and change "game.activeShape" to "this" inside the code block. Find out where this function is called and adjust how it's called to game.activeShape.flip.
-/*function flipShape(adj) {
-
-}*/
 
 // Renders or undraws the currently active shape
 function render(drawOrUndraw) {
@@ -251,8 +264,8 @@ function render(drawOrUndraw) {
   for(let i=0; i<position.length; i++){
     const x = position[i][0];
     const y = position[i][1];
-    grid[x][y].backgroundColor = renderColor;
-    grid[x][y].element.style.backgroundColor = renderColor;
+    grid.cell[x][y].backgroundColor = renderColor;
+    grid.cell[x][y].element.style.backgroundColor = renderColor;
   }
 }
 
@@ -274,10 +287,10 @@ function collisionCheck(checkPosition, dx, dy) {
   for(let i=0; i<checkPosition.length; i++) {
     const x = checkPosition[i][0];
     const y = checkPosition[i][1];
-    if(dx === 0 && dy === 1 && (y === game.rows-1 || grid[x+dx][y+dy].occupied === true)) { // if dx is 0 and dy is 1 we are falling, thus we check if we are on the floor row or a block is right below us.
+    if(dx === 0 && dy === 1 && (y === game.rows-1 || grid.cell[x+dx][y+dy].occupied === true)) { // if dx is 0 and dy is 1 we are falling, thus we check if we are on the floor row or a block is right below us.
       settleShape();
       return true; // collision is true
-    } else if(!isInsideGrid(x+dx, y+dy) || grid[x+dx][y+dy].occupied === true) {
+    } else if(!isInsideGrid(x+dx, y+dy) || grid.cell[x+dx][y+dy].occupied === true) {
       return true; // collision is true
     }
   }
@@ -302,8 +315,8 @@ function settleShape(){
     }
     const x = position[i][0];
     const y = position[i][1];
-    grid[x][y].occupied = true;
-    grid[x][y].backgroundColor = game.activeShape.color;
+    grid.cell[x][y].occupied = true;
+    grid.cell[x][y].backgroundColor = game.activeShape.color;
   }
   clearInterval(game.activeShape.fallInterval);
   checkRows(lowestRow,game.highestRow-1); // Starts checking rows starting from the lowest row the shape occupies and stops before highestRow-1.
@@ -311,7 +324,7 @@ function settleShape(){
     alert("You lose!");
     gameOver();
   } else {
-    spawnShape();
+    game.spawnShape();
   }
 }
 
@@ -320,9 +333,9 @@ async function checkRows(startHere, stopHere) {
     // Use stopHere to allow recursive calling of this function while only checking some rows instead of having to iterate over them all multiple times. -1 to check all, 18 to check only bottom row.
     // for loop to iterate through each column
     for(let x=0; x < game.columns; x++) {
-      if(grid[x][y].occupied === false) { 
+      if(grid.cell[x][y].occupied === false) { 
         break; // If any of the grid cells on the row are empty, we stop looping this row and move on.
-      } else if(grid[x][y].occupied === true && x === 9) { // If the last grid cell on row (19) is true, then that means all were true
+      } else if(grid.cell[x][y].occupied === true && x === 9) { // If the last grid cell on row (19) is true, then that means all were true
         await clearRows(y);
       }
     }
@@ -333,11 +346,11 @@ async function clearRows(row) { // Row is the row that needs to be cleared.
   for(let i=0; i<game.columns; i++) { // i iterates through the columns
     let x = i; // for better readability
     let y = row;
-    grid[x][y].occupied = false;
-    grid[x][y].backgroundColor = game.bgColor;
-    grid[x][y].element.style.backgroundColor = "gold"; // Uncolors the cleared row
+    grid.cell[x][y].occupied = false;
+    grid.cell[x][y].backgroundColor = game.bgColor;
+    grid.cell[x][y].element.style.backgroundColor = "gold"; // Uncolors the cleared row
     await delay(20); // for animation effect
-    grid[x][y].element.style.backgroundColor = game.bgColor;
+    grid.cell[x][y].element.style.backgroundColor = game.bgColor;
   }
   const scoreElem = document.getElementById("score");
   scoreElem.innerHTML = `${game.score += 10}`;
@@ -345,15 +358,15 @@ async function clearRows(row) { // Row is the row that needs to be cleared.
     for(let b=0; b<game.columns; b++) {
       y = a;
       x = b;
-      if(grid[x][y].occupied === true) {
+      if(grid.cell[x][y].occupied === true) {
         selector = `[data-x="${x}"][data-y="${y}"]`;
         targetDiv = document.querySelector(selector);
-        grid[x][y].occupied = false;
-        grid[x][y+1].occupied = true;
-        grid[x][y+1].backgroundColor = grid[x][y].backgroundColor; // Sets the color
-        grid[x][y].backgroundColor = game.bgColor;
-        grid[x][y].element.style.backgroundColor = game.bgColor;
-        grid[x][y+1].element.style.backgroundColor = grid[x][y+1].backgroundColor;
+        grid.cell[x][y].occupied = false;
+        grid.cell[x][y+1].occupied = true;
+        grid.cell[x][y+1].backgroundColor = grid.cell[x][y].backgroundColor; // Sets the color
+        grid.cell[x][y].backgroundColor = game.bgColor;
+        grid.cell[x][y].element.style.backgroundColor = game.bgColor;
+        grid.cell[x][y+1].element.style.backgroundColor = grid.cell[x][y+1].backgroundColor;
       }
     }
   }
@@ -369,15 +382,6 @@ function gameOver() {
   const scoreElem = document.getElementById("score");
   scoreElem.innerHTML = "0";
   renderUpcoming("undraw");
-  // Clear the main board.
-  for(let y = 0; y < game.rows; y++) {
-    for(let x = 0; x < game.columns; x++) {
-      if(grid[x][y].occupied === true) { // Skips coloring/updating already empty DIVs.
-        element = grid[x][y].element;
-        grid[x][y] = new Cell(element);
-        grid[x][y].element.style.backgroundColor = game.bgColor;
-      }
-    }
-  }
+  grid = new Grid(); // Create a new grid.
   game = new Game(); // Create a new game instance with default values.
 }
